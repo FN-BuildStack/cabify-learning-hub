@@ -4,6 +4,14 @@ import json
 import random
 import time
 
+# --- INICIALIZAR ESTADO DEL SIMULADOR ---
+if 'simulacion_activa' not in st.session_state:
+    st.session_state['simulacion_activa'] = False
+if 'paso_actual' not in st.session_state:
+    st.session_state['paso_actual'] = 0
+if 'puntaje' not in st.session_state:
+    st.session_state['puntaje'] = 0
+
 # Configuración de la página
 st.set_page_config(page_title="Cabify Automation Hub", layout="wide", page_icon="🚗")
 
@@ -121,7 +129,97 @@ with tabs[2]:
     st.warning("🚧 Módulo de Dashboards Predictivos en construcción...")
 
 # ==========================================
-# TAB 4: SIMULADOR (PARTE 4) - PROXIMAMENTE
+# TAB 4: SIMULADOR GAMIFICADO (PARTE 4)
 # ==========================================
 with tabs[3]:
-    st.warning("🚧 Simulador de Entrenamiento en construcción...")
+    st.header("🎮 Cabify Learning: Simulador de Operaciones")
+    st.markdown("Entrenamiento práctico: Resuelve el caso en menos de 2 minutos.")
+
+    # Datos del Escenario (Hardcoded para el MVP)
+    escenario = {
+        "contexto": "CONTEXTO: Un conductor (Dylan) escribe furioso porque se le cobró una tasa de servicio que considera injusta. Tu objetivo es calmarlo y validar su identidad.",
+        "chat_inicial": "DYLAN: ¡Son unos ladrones! Me descontaron $500 y yo no hice ese viaje. Quiero mi dinero YA o los denuncio.",
+        "pasos": [
+            {
+                "pregunta": "¿Qué respondes primero?",
+                "opciones": {
+                    "A": "Hola Dylan, cálmate. Nadie te está robando.",
+                    "B": "Hola Dylan, entiendo tu molestia. Para ayudarte, por favor confírmame tu placa y fecha del viaje.",
+                    "C": "Debes enviar un correo a soporte@cabify.com, por aquí no veo eso."
+                },
+                "correcta": "B",
+                "feedback_error": "❌ Error: La opción A es condescendiente ('cálmate') y la C es burocracia ('envía un correo'). Debes mostrar empatía y validar datos (Opción B).",
+                "feedback_acierto": "✅ ¡Excelente! Empatía + Validación de seguridad."
+            },
+            {
+                "pregunta": "Dylan responde: 'Mi placa es ABC-123. Fue ayer a las 3pm.' (Ves en el sistema que el cobro es correcto por una cancelación tardía). ¿Qué haces?",
+                "opciones": {
+                    "A": "Ah, es que cancelaste tarde. Es culpa tuya. Lee los términos.",
+                    "B": "Veo el cobro. Corresponde a una cancelación fuera de tiempo, pero como es tu primera vez, lo devolveré como excepción.",
+                    "C": "Te he devuelto el dinero. ¿Algo más?"
+                },
+                "correcta": "B",
+                "feedback_error": "❌ Error: La opción A es agresiva. La C es robótica. La B educa al usuario y fideliza (Customer Love).",
+                "feedback_acierto": "✅ ¡Perfecto! Educaste al usuario sobre la norma pero diste una solución (Wow experience)."
+            }
+        ]
+    }
+
+    # --- INTERFAZ DEL JUEGO ---
+    
+    col_juego, col_stats = st.columns([2, 1])
+
+    with col_stats:
+        st.write("### 🏆 Tu Progreso")
+        st.metric("Puntaje Actual", f"{st.session_state['puntaje']} pts")
+        if st.session_state['simulacion_activa']:
+            st.info(f"Escena {st.session_state['paso_actual'] + 1} de {len(escenario['pasos'])}")
+
+    with col_juego:
+        if not st.session_state['simulacion_activa']:
+            st.info(escenario['contexto'])
+            if st.button("▶️ INICIAR SIMULACIÓN"):
+                st.session_state['simulacion_activa'] = True
+                st.session_state['paso_actual'] = 0
+                st.session_state['puntaje'] = 0
+                st.rerun()
+        
+        else:
+            # Mostrar chat del cliente
+            with st.chat_message("user", avatar="😠"):
+                if st.session_state['paso_actual'] == 0:
+                    st.write(escenario['chat_inicial'])
+                else:
+                    st.write("DYLAN: (Esperando solución...)")
+
+            # Mostrar pregunta actual
+            paso = escenario['pasos'][st.session_state['paso_actual']]
+            st.write(f"**Decisión {st.session_state['paso_actual'] + 1}:** {paso['pregunta']}")
+
+            # Botones de respuesta
+            c1, c2, c3 = st.columns(3)
+            
+            # Lógica para evitar clicks múltiples
+            def responder(opcion):
+                if opcion == paso['correcta']:
+                    st.toast(paso['feedback_acierto'], icon="✅")
+                    st.session_state['puntaje'] += 50
+                    time.sleep(1)
+                else:
+                    st.toast(paso['feedback_error'], icon="❌")
+                    st.error(paso['feedback_error'])
+                    time.sleep(2)
+                
+                # Avanzar o Terminar
+                if st.session_state['paso_actual'] < len(escenario['pasos']) - 1:
+                    st.session_state['paso_actual'] += 1
+                else:
+                    st.session_state['simulacion_activa'] = False
+                    st.balloons()
+                    st.success(f"🎉 ¡Simulación Terminada! Puntaje Final: {st.session_state['puntaje']}/100")
+                
+                st.rerun()
+
+            if c1.button(f"A) {paso['opciones']['A'][:30]}..."): responder("A")
+            if c2.button(f"B) {paso['opciones']['B'][:30]}..."): responder("B")
+            if c3.button(f"C) {paso['opciones']['C'][:30]}..."): responder("C")
