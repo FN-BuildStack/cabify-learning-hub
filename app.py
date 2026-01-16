@@ -122,12 +122,94 @@ with tabs[1]:
                     "requiere_reentrenamiento": True if score_empatia < 70 else False
                 })
 
+import plotly.express as px  # Asegúrate de que esto esté arriba con los imports
+
 # ==========================================
-# TAB 3: DASHBOARD (PARTE 3) - PROXIMAMENTE
+# TAB 3: DASHBOARD PREDICTIVO (PARTE 3)
 # ==========================================
 with tabs[2]:
-    st.warning("🚧 Módulo de Dashboards Predictivos en construcción...")
+    st.header("📊 Torre de Control de Formación")
+    st.markdown("Visibilidad en tiempo real del estado de certificación y riesgo de fuga.")
 
+    # 1. GENERACIÓN DE DATOS (Simulamos conexión a Base de Datos)
+    # Nota: En un caso real, esto vendría de SQL o BigQuery
+    def obtener_data_analytics():
+        data = []
+        cohortes = ['Enero', 'Febrero', 'Marzo']
+        for i in range(50):
+            cohorte = random.choice(cohortes)
+            nota = random.randint(50, 100)
+            tiempo = random.randint(30, 180) # Minutos en plataforma
+            
+            # Lógica de Riesgo (Business Intelligence)
+            riesgo = "Bajo"
+            if nota < 70: riesgo = "Medio"
+            if nota < 60 and tiempo < 60: riesgo = "Crítico"
+            
+            data.append({
+                "Agente": f"AGT-{i:03d}",
+                "Cohorte": cohorte,
+                "Nota Final": nota,
+                "Tiempo en Plataforma (min)": tiempo,
+                "Nivel de Riesgo": riesgo,
+                "Estado": "Certificado" if nota >= 80 else "En Proceso"
+            })
+        return pd.DataFrame(data)
+
+    df = obtener_data_analytics()
+
+    # 2. KPIs SUPERIORES (METRICAS CLAVE)
+    kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+    
+    certificados = df[df["Estado"]=="Certificado"].shape[0]
+    en_riesgo = df[df["Nivel de Riesgo"]=="Crítico"].shape[0]
+    promedio_nota = df["Nota Final"].mean()
+
+    kpi1.metric("Total Agentes", len(df), "+5 nuevos")
+    kpi2.metric("Tasa Certificación", f"{certificados/len(df)*100:.0f}%", "Objetivo: 85%")
+    kpi3.metric("Riesgo de Fuga", en_riesgo, "-2 vs semana pasada", delta_color="inverse")
+    kpi4.metric("Nota Promedio", f"{promedio_nota:.1f}", "+1.2 pts")
+
+    st.markdown("---")
+
+    # 3. GRÁFICOS INTERACTIVOS (PLOTLY)
+    col_left, col_right = st.columns([2, 1])
+
+    with col_left:
+        st.subheader("🔍 Matriz de Rendimiento vs. Dedicación")
+        # Gráfico de Dispersión: Muestra correlación entre estudiar y aprobar
+        fig_scatter = px.scatter(
+            df, 
+            x="Tiempo en Plataforma (min)", 
+            y="Nota Final", 
+            color="Nivel de Riesgo",
+            size="Nota Final",
+            hover_data=["Agente", "Cohorte"],
+            color_discrete_map={"Bajo": "#00CC96", "Medio": "#FFA15A", "Crítico": "#EF553B"},
+            title="¿Quién está en riesgo de reprobar?"
+        )
+        st.plotly_chart(fig_scatter, use_container_width=True)
+
+    with col_right:
+        st.subheader("👥 Estado por Cohorte")
+        # Gráfico de Barras Apiladas
+        fig_bar = px.bar(
+            df, 
+            x="Cohorte", 
+            color="Estado", 
+            barmode="group",
+            color_discrete_sequence=["#636EFA", "#AB63FA"],
+            title="Avance de Grupos"
+        )
+        st.plotly_chart(fig_bar, use_container_width=True)
+
+    # 4. TABLA DE DETALLE CON ALERTAS
+    st.subheader("🚨 Agentes que requieren atención inmediata (Top 5 Riesgo)")
+    df_critical = df[df["Nivel de Riesgo"] == "Crítico"].head(5)
+    st.dataframe(
+        df_critical.style.applymap(lambda x: 'color: red' if x == 'Crítico' else '', subset=['Nivel de Riesgo']),
+        use_container_width=True
+    )
 # ==========================================
 # TAB 4: SIMULADOR GAMIFICADO (PARTE 4)
 # ==========================================
