@@ -1,4 +1,4 @@
-"""# Cabify Training Hub Frontend
+# Cabify Training Hub Frontend
 
 An automated, highly interactive frontend application designed to optimize and streamline the training, onboarding, and evaluation pipeline for Cabify personnel. This project modernizes and automates a legacy manual training framework into a seamless, self-paced digital learning experience.
 
@@ -27,12 +27,6 @@ Built using **React**, **Vite**, **TypeScript**, and **Tailwind CSS**, the platf
 ---
 
 ## Directory Structure
-
-
-```
-
-```text
-File written successfully.
 
 ```text
 Cabify_Auto_Project/
@@ -130,12 +124,4 @@ npm run preview
 
 ## License
 
-This project is distributed under the standard guidelines detailed within the [LICENSE] architecture. All intellectual property, media assets, logos, and operational workflows remain proprietary to their respective authors and stakeholders.
-"""
-
-with open("README.md", "w") as f:
-f.write(readme_content)
-
-print("File written successfully.")
-
-```
+This project is distributed under the standard guidelines detailed within the LICENSE architecture. All intellectual property, media assets, logos, and operational workflows remain proprietary to their respective authors and stakeholders.
